@@ -3,11 +3,30 @@
 @inject IJSRuntime JS
 
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow rounded-4">
+    <div class="row">
+        
+        <div class="col-md-5">
+            <div class="card shadow-sm p-4 rounded-4 animate-left text-dark bg-light">
+                <h4 class="text-primary mb-3">📘 Proje Hakkında</h4>
+                <p>Bu form <strong>Blazor + JavaScript</strong> entegrasyonunu test etmek için hazırlanmıştır.</p>
+                <ul>
+                    <li>✅ Form verisi JavaScript ile doğrulanır.</li>
+                    <li>📦 localStorage'da saklanır.</li>
+                    <li>🔁 Blazor’a .NET üzerinden aktarılır.</li>
+                </ul>
+                <hr />
+                <p class="text-muted small">
+                    Geliştirici: <strong>Dilara Ulaş</strong><br />
+                    Proje: <code>JsDotnetWrapperDemo</code>
+                </p>
+            </div>
+        </div>
+
+    
+        <div class="col-md-7">
+            <div class="card shadow rounded-4 animate-right">
                 <div class="card-body">
-                    <h3 class="card-title text-center mb-4">🧾 JS Wrapper Form Validation</h3>
+                    <h3 class="card-title text-center mb-4 text-success">🧾 JS Wrapper Form Validation</h3>
 
                     <div class="form-floating mb-3">
                         <input class="form-control" id="nameInput" placeholder="Name" @bind="user.Name" />
@@ -24,7 +43,7 @@
                         <label for="ageInput">Age</label>
                     </div>
 
-                    <button class="btn btn-primary w-100 mb-3" @onclick="Validate">
+                    <button class="btn btn-success w-100 mb-3" @onclick="Validate">
                         ✅ Validate (via JS)
                     </button>
 
@@ -45,7 +64,10 @@
                                     <div>
                                         <strong>@u.Name</strong> - @u.Email
                                     </div>
-                                    <span class="badge bg-secondary">@u.Age y/o</span>
+                                    <div>
+                                        <span class="badge bg-secondary me-2">@u.Age y/o</span>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(u.Email)">🗑 Sil</button>
+                                    </div>
                                 </li>
                             }
                         </ul>
@@ -55,6 +77,10 @@
         </div>
     </div>
 </div>
+
+<footer class="text-center text-muted mt-5 small">
+    &copy; 2025 JsDotnetWrapperDemo - Dilara Ulaş
+</footer>
 
 @code {
     private User user = new();
@@ -76,10 +102,17 @@
     [JSInvokable]
     public void ReceiveValidatedUser(User validated)
     {
-        userList.Add(validated);
+        if (!userList.Any(u => u.Email == validated.Email))
+            userList.Add(validated);
+
         message = $"✅ Kaydedildi: {validated.Name} ({validated.Email})";
         user = new();
         StateHasChanged();
     }
 
+    private async Task DeleteUser(string email)
+    {
+        userList = userList.Where(u => u.Email != email).ToList();
+        await JS.InvokeVoidAsync("deleteUserFromStorage", email);
+    }
 }
