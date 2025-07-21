@@ -4,7 +4,7 @@
 
 <div class="container mt-5">
     <div class="row">
-        
+        <!-- SOL TARAF -->
         <div class="col-md-5">
             <div class="card shadow-sm p-4 rounded-4 animate-left text-dark bg-light">
                 <h4 class="text-primary mb-3">📘 Proje Hakkında</h4>
@@ -22,7 +22,7 @@
             </div>
         </div>
 
-    
+        <!-- SAĞ TARAF -->
         <div class="col-md-7">
             <div class="card shadow rounded-4 animate-right">
                 <div class="card-body">
@@ -47,13 +47,6 @@
                         ✅ Validate (via JS)
                     </button>
 
-                    @if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        <div class="alert alert-success text-center fade-in shadow-sm rounded-2 p-3">
-                            @message
-                        </div>
-                    }
-
                     @if (userList.Count > 0)
                     {
                         <h5 class="mt-4">📋 Validated Users</h5>
@@ -66,7 +59,7 @@
                                     </div>
                                     <div>
                                         <span class="badge bg-secondary me-2">@u.Age y/o</span>
-                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(u.Email)">🗑 Sil</button>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(u.Email)">🗑 Sil</button>
                                     </div>
                                 </li>
                             }
@@ -84,7 +77,6 @@
 
 @code {
     private User user = new();
-    private string message = "";
     private List<User> userList = new();
     private DotNetObjectReference<FormValidation>? dotnetRef;
 
@@ -96,7 +88,8 @@
 
     private async Task Validate()
     {
-        await JS.InvokeVoidAsync("validateForm", user, dotnetRef);
+        if (dotnetRef is not null)
+            await JS.InvokeVoidAsync("validateForm", user, dotnetRef);
     }
 
     [JSInvokable]
@@ -105,14 +98,20 @@
         if (!userList.Any(u => u.Email == validated.Email))
             userList.Add(validated);
 
-        message = $"✅ Kaydedildi: {validated.Name} ({validated.Email})";
         user = new();
         StateHasChanged();
     }
 
-    private async Task DeleteUser(string email)
+    private async Task ConfirmDelete(string email)
+    {
+        if (dotnetRef is not null)
+            await JS.InvokeVoidAsync("confirmAndDelete", email, dotnetRef);
+    }
+
+    [JSInvokable]
+    public void RemoveUserFromList(string email)
     {
         userList = userList.Where(u => u.Email != email).ToList();
-        await JS.InvokeVoidAsync("deleteUserFromStorage", email);
+        StateHasChanged();
     }
 }
